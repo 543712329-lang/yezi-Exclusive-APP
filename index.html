@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>暖心便签 BloomNotes - 治愈系桌面美学待办</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts for cute aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Tone.js for soft soothing sound effects without external audio assets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <!-- Canvas Confetti for celebrating completed tasks -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans SC"', '"Comfortaa"', 'sans-serif'],
+            cute: ['"Comfortaa"', 'cursive', 'sans-serif'],
+          },
+          colors: {
+            sakura: { 50: '#fff5f7', 100: '#ffe4ea', 200: '#ffccd8', 300: '#fba5b8', 400: '#f87394', 500: '#ee4773' },
+            cream: { 50: '#fffdf5', 100: '#fff9db', 200: '#fff3b8', 300: '#ffe682', 400: '#ffd64d' },
+            mint: { 50: '#f2fcf7', 100: '#ddf7ea', 200: '#bcf0d6', 300: '#8fe4bd', 400: '#53ce98' },
+            morandi: { 50: '#faf7fc', 100: '#f2e8fa', 200: '#e4d3f5', 300: '#cbb0eb', 400: '#af8add' },
+            oatmeal: { 50: '#faf9f6', 100: '#f4f1ea', 200: '#e8e2d5', 300: '#d7cdb9', 400: '#c2b49c' },
+            peach: { 50: '#fff6f2', 100: '#ffebd8', 200: '#ffd3b8', 300: '#ffb594', 400: '#ff8f66' },
+          },
+          boxShadow: {
+            'soft': '0 12px 35px -8px rgba(180, 150, 170, 0.22)',
+            'paper': '0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
+            'float': '0 20px 40px -10px rgba(220, 160, 190, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      user-select: none;
+      overflow: hidden;
+    }
+    
+    /* Scrollbar customization */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(220, 180, 200, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(220, 180, 200, 0.7);
+    }
+
+    /* Washi tape effect */
+    .washi-tape {
+      background: rgba(255, 230, 235, 0.75);
+      border-left: 2px dashed rgba(230, 170, 190, 0.5);
+      border-right: 2px dashed rgba(230, 170, 190, 0.5);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      backdrop-filter: blur(2px);
+    }
+
+    /* Wave border shape */
+    .wave-border {
+      border-radius: 28px 12px 28px 14px;
+    }
+
+    /* Polaroid photo frame style */
+    .polaroid-frame {
+      border-top: 14px solid #ffffff;
+      border-left: 14px solid #ffffff;
+      border-right: 14px solid #ffffff;
+      border-bottom: 38px solid #ffffff;
+      box-shadow: 0 15px 35px rgba(100, 90, 110, 0.15);
+    }
+
+    /* Hand drawn paper style */
+    .hand-drawn-paper {
+      border-radius: 4px;
+      border: 1.5px solid rgba(210, 195, 180, 0.6);
+      background-image: radial-gradient(rgba(200, 180, 160, 0.12) 1px, transparent 0);
+      background-size: 16px 16px;
+    }
+
+    /* Privacy blur mode */
+    .privacy-blurred .note-content-area {
+      filter: blur(7px);
+      transition: filter 0.25s ease;
+    }
+
+    /* Custom Checkbox animations */
+    .check-bounce {
+      animation: checkBounce 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes checkBounce {
+      0% { transform: scale(0.65); }
+      60% { transform: scale(1.28); }
+      100% { transform: scale(1); }
+    }
+
+    /* Gentle floating animation for widgets */
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(1.5deg); }
+    }
+    .animate-gentle-float {
+      animation: gentleFloat 4s ease-in-out infinite;
+    }
+
+    /* Resizing handles styling */
+    .resize-handle-r {
+      position: absolute;
+      top: 10px;
+      right: -4px;
+      width: 10px;
+      bottom: 10px;
+      cursor: ew-resize;
+      z-index: 35;
+      touch-action: none;
+    }
+    .resize-handle-b {
+      position: absolute;
+      left: 10px;
+      bottom: -4px;
+      right: 10px;
+      height: 10px;
+      cursor: ns-resize;
+      z-index: 35;
+      touch-action: none;
+    }
+    .resize-handle-se {
+      position: absolute;
+      right: -2px;
+      bottom: -2px;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+      z-index: 36;
+      touch-action: none;
+    }
+    .resize-corner-indicator {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 8px;
+      height: 8px;
+      opacity: 0.3;
+      border-right: 2px solid #aaa;
+      border-bottom: 2px solid #aaa;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .group:hover .resize-corner-indicator {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen relative overflow-hidden bg-slate-100 select-none">
+  <!-- Dynamic Desktop Background Wallpaper -->
+  <div id="desktop-bg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none"
+       style="background: linear-gradient(135deg, #fceef2 0%, #f7eff9 45%, #eff6fd 100%);">
+    <!-- Ambient glowing subtle circles -->
+    <div class="absolute top-10 left-1/4 w-96 h-96 rounded-full bg-pink-200/30 blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-20 right-1/4 w-[28rem] h-[28rem] rounded-full bg-purple-200/30 blur-3xl pointer-events-none"></div>
+  </div>
+
+  <!-- Top Aesthetic Desktop Header Bar -->
+  <header class="relative z-30 h-14 bg-white/70 backdrop-blur-md border-b border-pink-100/70 px-4 md:px-6 flex items-center justify-between shadow-sm">
+    <!-- Left Logo & Brand -->
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-sakura-400 to-peach-300 flex items-center justify-center text-white shadow-md shadow-pink-200">
+        <i class="fa-solid fa-seedling text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-gray-800 tracking-wide flex items-center gap-1.5">
+          <span>暖心便签</span>
+          <span class="text-xs font-cute text-sakura-500 font-normal bg-pink-50 px-2 py-0.5 rounded-full border border-pink-200/60">BloomNotes</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Center Shortcuts & Actions -->
+    <div class="hidden sm:flex items-center space-x-2 bg-pink-50/80 px-3 py-1.5 rounded-full border border-pink-100 shadow-inner">
+      <button onclick="createNewNote()" class="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-sakura-400 to-sakura-500 text-white text-xs font-medium rounded-full shadow-sm hover:opacity-95 active:scale-95 transition">
+        <i class="fa-solid fa-plus text-xs"></i>
+        <span>新建便签</span>
+      </button>
+      <button onclick="toggleCalendarModal()" class="flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-700 hover:text-sakura-600 rounded-full hover:bg-white/80 transition">
+        <i class="fa-regular fa-calendar-heart text-sakura-400"></i>
+        <span>微型月历</span>
+      </button>
+      <button onclick="toggleDrawer()" class="flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-700 hover:text-sakura-600 rounded-full hover:bg-white/80 transition">
+        <i class="fa-solid fa-box-archive text-sakura-400"></i>
+        <span>便签抽屉 (<span id="total-notes-count">0</span>)</span>
+      </button>
+    </div>
+
+    <!-- Right Controls: Sound, Wallpaper, Privacy, Daily Quote -->
+    <div class="flex items-center space-x-2">
+      <!-- Privacy anti-peep button -->
+      <button id="privacy-toggle-btn" onclick="togglePrivacyMode()" title="防窥模式 (Alt+P)"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:text-sakura-500 hover:bg-pink-50 transition border border-transparent hover:border-pink-200">
+        <i class="fa-solid fa-eye text-sm"></i>
+      </button>
+      <!-- Sound toggle -->
+      <button id="sound-toggle-btn" onclick="toggleSound()" title="打卡治愈音效"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-sakura-500 hover:bg-pink-50 transition border border-pink-200 bg-pink-50/50">
+        <i class="fa-solid fa-volume-high text-sm"></i>
+      </button>
+      <!-- Wallpaper changer -->
+      <button onclick="cycleWallpaper()" title="切换桌面壁纸"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:text-sakura-500 hover:bg-pink-50 transition">
+        <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+      </button>
+      <!-- Add new mobile button -->
+      <button onclick="createNewNote()" class="sm:hidden w-8 h-8 rounded-full bg-sakura-500 text-white flex items-center justify-center shadow-md">
+        <i class="fa-solid fa-plus text-xs"></i>
+      </button>
+    </div>
+  </header>
+
+  <main id="desktop-canvas" class="relative w-full h-[calc(100vh-3.5rem)] overflow-hidden">
+    <!-- Desktop Ambient Daily Quote & Date Widget (Bottom Right) -->
+    <div class="absolute bottom-5 right-6 z-10 hidden md:flex flex-col items-end pointer-events-none select-none opacity-85">
+      <div class="text-xs font-medium text-pink-700/80 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-sm border border-pink-100 flex items-center gap-2">
+        <i class="fa-solid fa-quote-left text-sakura-400 text-xs"></i>
+        <span id="daily-quote-text">生活里的小确幸，藏在每一件勾选完成的小事里。</span>
+        <button onclick="refreshDailyQuote()" class="pointer-events-auto hover:text-sakura-600 transition">
+          <i class="fa-solid fa-rotate-right text-[10px]"></i>
+        </button>
+      </div>
+      <div class="text-[11px] text-gray-500 mt-1 font-mono tracking-wider" id="desktop-clock-display">
+        2026.09.17 THU 10:30
+      </div>
+    </div>
+
+    <!-- Notes Container -->
+    <div id="notes-container" class="w-full h-full relative">
+      <!-- Notes will be dynamically rendered here -->
+    </div>
+  </main>
+
+  <div id="note-drawer" class="fixed inset-y-0 right-0 z-50 w-80 sm:w-96 bg-white/95 backdrop-blur-xl shadow-2xl border-l border-pink-100 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+    <div class="p-5 border-b border-pink-100 flex items-center justify-between bg-pink-50/50">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-xl bg-sakura-100 text-sakura-500 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-folder-heart"></i>
+        </div>
+        <h3 class="font-bold text-gray-800 text-sm">便签收纳盒</h3>
+      </div>
+      <button onclick="toggleDrawer()" class="w-7 h-7 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Category filter tabs -->
+    <div class="px-4 pt-3 pb-2 border-b border-gray-100 flex gap-1.5 overflow-x-auto">
+      <button onclick="filterDrawerNotes('all')" class="drawer-filter-btn active text-xs px-2.5 py-1 rounded-full bg-sakura-500 text-white font-medium whitespace-nowrap">全部</button>
+      <button onclick="filterDrawerNotes('work')" class="drawer-filter-btn text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-50 whitespace-nowrap">工作安排</button>
+      <button onclick="filterDrawerNotes('life')" class="drawer-filter-btn text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-50 whitespace-nowrap">生活日常</button>
+      <button onclick="filterDrawerNotes('study')" class="drawer-filter-btn text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-50 whitespace-nowrap">备考学习</button>
+      <button onclick="filterDrawerNotes('wishlist')" class="drawer-filter-btn text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-pink-50 whitespace-nowrap">愿望清单</button>
+    </div>
+
+    <!-- Drawer notes list -->
+    <div id="drawer-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <!-- Populated via JS -->
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-4 border-t border-pink-100 bg-pink-50/30 flex items-center justify-between">
+      <button onclick="arrangeAllNotes()" class="text-xs text-gray-600 hover:text-sakura-600 flex items-center gap-1.5">
+        <i class="fa-solid fa-table-cells"></i>
+        <span>一键平铺排布</span>
+      </button>
+      <button onclick="createNewNote(); toggleDrawer();" class="text-xs bg-sakura-500 text-white px-3 py-1.5 rounded-full shadow hover:bg-sakura-600 transition flex items-center gap-1">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+        <span>新建便签</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="calendar-modal" class="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-pink-100 w-full max-w-lg p-6 animate-checkBounce overflow-hidden">
+      <div class="flex items-center justify-between pb-4 border-b border-pink-100">
+        <div class="flex items-center gap-2">
+          <i class="fa-regular fa-calendar-check text-sakura-500 text-lg"></i>
+          <h2 class="text-base font-bold text-gray-800" id="calendar-month-title">2026年 9月</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="changeCalendarMonth(-1)" class="w-7 h-7 rounded-full hover:bg-pink-50 text-gray-600 flex items-center justify-center">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+          <button onclick="changeCalendarMonth(1)" class="w-7 h-7 rounded-full hover:bg-pink-50 text-gray-600 flex items-center justify-center">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+          <button onclick="toggleCalendarModal()" class="w-7 h-7 rounded-full hover:bg-gray-100 text-gray-400 flex items-center justify-center ml-2">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Days of week -->
+      <div class="grid grid-cols-7 gap-1 pt-4 text-center text-xs font-medium text-gray-400 mb-2">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+
+      <!-- Month days grid -->
+      <div id="calendar-days-grid" class="grid grid-cols-7 gap-1.5 text-xs text-center">
+        <!-- Generated by JS -->
+      </div>
+
+      <!-- Schedule preview list for selected date -->
+      <div class="mt-4 pt-4 border-t border-pink-100">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-gray-700" id="selected-date-label">今日待办事项</span>
+          <span class="text-[11px] text-sakura-500" id="selected-date-count">0 项提醒</span>
+        </div>
+        <div id="calendar-tasks-preview" class="max-h-32 overflow-y-auto space-y-1.5 text-xs text-gray-600">
+          <div class="text-center py-4 text-gray-400">选择日期查看关联的待办行程</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="polaroid-modal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-pink-100 flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-3">
+        <span class="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-camera-retro text-sakura-500"></i>
+          <span>今日打卡拍立得手账卡片</span>
+        </span>
+        <button onclick="closePolaroidModal()" class="text-gray-400 hover:text-gray-600 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- The Polaroid Snapshot Container to be rendered -->
+      <div id="polaroid-card-render" class="w-full bg-white p-4 rounded-xl border border-pink-100 shadow-md flex flex-col items-center relative overflow-hidden"
+           style="background: linear-gradient(180deg, #ffffff 0%, #fffbfd 100%);">
+        <!-- Cute decorative washi tape -->
+        <div class="w-24 h-5 washi-tape mb-3 rounded-sm transform -rotate-1"></div>
+        <div id="polaroid-tag-display" class="text-[11px] font-medium text-sakura-500 bg-pink-50 px-2.5 py-0.5 rounded-full mb-2">
+          🌸 今日小成就
+        </div>
+        <h3 id="polaroid-title-display" class="font-bold text-gray-800 text-sm mb-3 text-center">
+          阳光满满的治愈清单
+        </h3>
+        
+        <!-- Tasks list preview in card -->
+        <div id="polaroid-tasks-list" class="w-full text-xs space-y-2 py-2 px-1 border-y border-pink-50 mb-3">
+          <!-- Filled via JS -->
+        </div>
+
+        <!-- Card bottom date & stamp -->
+        <div class="w-full flex justify-between items-end pt-1 text-[10px] text-gray-400 font-mono">
+          <div>
+            <p id="polaroid-date-stamp">2026.09.17</p>
+            <p class="text-sakura-400 font-cute font-bold">BloomNotes</p>
+          </div>
+          <div class="w-10 h-10 rounded-full border-2 border-dashed border-sakura-300 flex items-center justify-center text-sakura-400 transform rotate-12">
+            <span class="text-[9px] font-bold">DONE!</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-gray-400 mt-3 text-center">可保存分享到小红书、朋友圈记录每日自律仪式感</p>
+      
+      <div class="mt-4 flex gap-2 w-full">
+        <button onclick="downloadPolaroidCard()" class="flex-1 py-2 bg-gradient-to-r from-sakura-400 to-sakura-500 text-white rounded-2xl text-xs font-medium shadow-md shadow-pink-200 hover:opacity-95 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-download"></i>
+          <span>保存图片</span>
+        </button>
+        <button onclick="closePolaroidModal()" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-2xl text-xs hover:bg-gray-200 transition">
+          关闭
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none space-y-2">
+    <!-- Toasts will appear here -->
+  </div>
+
+  <script>
+    // State management
+    const state = {
+      notes: [],
+      activeNoteId: null,
+      soundEnabled: true,
+      privacyMode: false,
+      currentWallpaperIndex: 0,
+      activeDrawerFilter: 'all',
+      calendarDate: new Date(),
+      selectedCalendarDay: new Date().getDate(),
+    };
+
+    // Color theme definitions matching PRD
+    const THEMES = {
+      sakura: {
+        name: '治愈粉樱',
+        bgClass: 'bg-sakura-50/95',
+        borderClass: 'border-sakura-200',
+        headerClass: 'bg-sakura-100/70 text-sakura-900',
+        accentColor: '#f87394',
+        tagBg: 'bg-sakura-100 text-sakura-600',
+        gradient: 'from-pink-400 to-sakura-500'
+      },
+      cream: {
+        name: '奶油莫兰迪',
+        bgClass: 'bg-cream-50/95',
+        borderClass: 'border-cream-200',
+        headerClass: 'bg-cream-100/70 text-amber-900',
+        accentColor: '#ffd64d',
+        tagBg: 'bg-cream-100 text-amber-700',
+        gradient: 'from-amber-300 to-yellow-400'
+      },
+      mint: {
+        name: '日系薄荷',
+        bgClass: 'bg-mint-50/95',
+        borderClass: 'border-mint-200',
+        headerClass: 'bg-mint-100/70 text-emerald-900',
+        accentColor: '#53ce98',
+        tagBg: 'bg-mint-100 text-emerald-700',
+        gradient: 'from-emerald-300 to-teal-400'
+      },
+      morandi: {
+        name: '温润紫罗兰',
+        bgClass: 'bg-morandi-50/95',
+        borderClass: 'border-morandi-200',
+        headerClass: 'bg-morandi-100/70 text-purple-900',
+        accentColor: '#af8add',
+        tagBg: 'bg-morandi-100 text-purple-700',
+        gradient: 'from-purple-300 to-indigo-400'
+      },
+      oatmeal: {
+        name: '燕麦温润白',
+        bgClass: 'bg-oatmeal-50/95',
+        borderClass: 'border-oatmeal-200',
+        headerClass: 'bg-oatmeal-100/70 text-stone-800',
+        accentColor: '#c2b49c',
+        tagBg: 'bg-oatmeal-100 text-stone-700',
+        gradient: 'from-stone-300 to-amber-200'
+      },
+      peach: {
+        name: '暖阳蜜桃',
+        bgClass: 'bg-peach-50/95',
+        borderClass: 'border-peach-200',
+        headerClass: 'bg-peach-100/70 text-orange-900',
+        accentColor: '#ff8f66',
+        tagBg: 'bg-peach-100 text-orange-700',
+        gradient: 'from-orange-300 to-rose-400'
+      }
+    };
+
+    // Category Tags
+    const CATEGORIES = [
+      { id: 'work', label: '工作安排', icon: 'fa-briefcase' },
+      { id: 'life', label: '生活日常', icon: 'fa-mug-hot' },
+      { id: 'study', label: '备考学习', icon: 'fa-book-open' },
+      { id: 'wishlist', label: '愿望清单', icon: 'fa-heart' }
+    ];
+
+    // Checkbox Icons options
+    const CHECK_ICONS = [
+      { id: 'flower', icon: 'fa-solid fa-clover', emoji: '🌸', label: '小红花' },
+      { id: 'heart', icon: 'fa-solid fa-heart', emoji: '💖', label: '粉红爱心' },
+      { id: 'paw', icon: 'fa-solid fa-paw', emoji: '🐾', label: '软萌猫爪' },
+      { id: 'star', icon: 'fa-solid fa-star', emoji: '⭐', label: '小星星' },
+      { id: 'circle', icon: 'fa-solid fa-circle-check', emoji: '✓', label: '轻量圆' }
+    ];
+
+    // Decorative stickers list
+    const STICKERS = ['🌸', '🐾', '🎀', '⭐', '🍓', '🥐', '✨', '☕', '🧸', '🌈'];
+
+    // Daily quotes library
+    const QUOTES = [
+      "生活里的小确幸，藏在每一件勾选完成的小事里。",
+      "按时吃饭，按计划完成，今天的你也在闪闪发光。",
+      "不急不躁，一步步把心中的待办都变成盛开的花。",
+      "今日份的温柔和自律，请签收。",
+      "风吹又日出，生活原本就有很多值得期待的美好。"
+    ];
+
+    // Wallpapers library
+    const WALLPAPERS = [
+      'linear-gradient(135deg, #fceef2 0%, #f7eff9 45%, #eff6fd 100%)',
+      'linear-gradient(135deg, #fef6e4 0%, #f7dbe4 50%, #e0e8f9 100%)',
+      'linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 50%, #fff3e0 100%)',
+      'linear-gradient(135deg, #2b2b3a 0%, #3e334a 50%, #222b38 100%)' // Night soft theme
+    ];
+
+    let audioInitialized = false;
+    let synth = null;
+    let chimeSynth = null;
+
+    function initAudio() {
+      if (audioInitialized || typeof Tone === 'undefined') return;
+      try {
+        // Kalimba / Music box gentle synth
+        synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.005, decay: 0.3, sustain: 0.1, release: 0.8 }
+        }).toDestination();
+        synth.volume.value = -10;
+
+        // Water drop / bubble chime synth
+        chimeSynth = new Tone.MembraneSynth({
+          pitchDecay: 0.05,
+          octaves: 3,
+          oscillator: { type: 'sine' },
+          envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.4 }
+        }).toDestination();
+        chimeSynth.volume.value = -12;
+
+        audioInitialized = true;
+      } catch (err) {
+        console.warn('Audio initialization deferred:', err);
+      }
+    }
+
+    // Play checkmark sound
+    function playCheckSound() {
+      if (!state.soundEnabled) return;
+      initAudio();
+      try {
+        if (Tone.context.state !== 'running') {
+          Tone.start();
+        }
+        // Cute pleasant chord arpeggio (C5 -> E5 -> G5)
+        const notes = ['C5', 'E5', 'G5'];
+        const now = Tone.now();
+        notes.forEach((note, i) => {
+          synth.triggerAttackRelease(note, '8n', now + i * 0.06);
+        });
+      } catch (e) {}
+    }
+
+    // Play bubble pop sound
+    function playBubbleSound() {
+      if (!state.soundEnabled) return;
+      initAudio();
+      try {
+        if (Tone.context.state !== 'running') Tone.start();
+        chimeSynth.triggerAttackRelease('A4', '16n');
+      } catch (e) {}
+    }
+
+    function initializeDefaultNotes() {
+      const defaultNotes = [
+        {
+          id: 'note-1',
+          title: '🌸 今日打卡与日程安排',
+          category: 'work',
+          theme: 'sakura',
+          shape: 'polaroid',
+          opacity: 0.95,
+          pinned: true,
+          locked: false,
+          minimized: false,
+          checkIcon: 'flower',
+          stickers: ['🌸', '✨'],
+          x: 40,
+          y: 40,
+          width: 340,
+          height: 380,
+          zIndex: 10,
+          items: [
+            { id: 't1', text: '完成 BloomNotes 视觉设计评审', done: true, priority: 'high', reminderTime: '10:00' },
+            { id: 't2', text: '挑选适合办公室的无版权手绘字体', done: true, priority: 'normal', reminderTime: '' },
+            { id: 't3', text: '下午 3:00 与团队对齐跨平台轻量方案', done: false, priority: 'high', reminderTime: '15:00' },
+            { id: 't4', text: '整理小红书手账美学灵感画板', done: false, priority: 'low', reminderTime: '' }
+          ]
+        },
+        {
+          id: 'note-2',
+          title: '☕ 治愈生活自律愿望',
+          category: 'life',
+          theme: 'cream',
+          shape: 'wave',
+          opacity: 0.92,
+          pinned: false,
+          locked: false,
+          minimized: false,
+          checkIcon: 'paw',
+          stickers: ['🍓', '🐾'],
+          x: 460,
+          y: 60,
+          width: 340,
+          height: 340,
+          zIndex: 9,
+          items: [
+            { id: 't5', text: '早起饮用温柠檬水 500ml', done: true, priority: 'normal', reminderTime: '08:00' },
+            { id: 't6', text: '给桌上的小雏菊换水晒太阳', done: false, priority: 'low', reminderTime: '' },
+            { id: 't7', text: '晚上阅读《生活手账的仪式感》20页', done: false, priority: 'normal', reminderTime: '21:00' }
+          ]
+        },
+        {
+          id: 'note-3',
+          title: '📚 备考专心单词清单',
+          category: 'study',
+          theme: 'mint',
+          shape: 'hand-drawn',
+          opacity: 0.90,
+          pinned: false,
+          locked: false,
+          minimized: false,
+          checkIcon: 'heart',
+          stickers: ['🎀'],
+          x: 880,
+          y: 110,
+          width: 320,
+          height: 300,
+          zIndex: 8,
+          items: [
+            { id: 't8', text: '雅思高频写作连接词记忆 (Unit 4)', done: false, priority: 'high', reminderTime: '' },
+            { id: 't9', text: '听力精听 1 篇真题材料', done: false, priority: 'normal', reminderTime: '' }
+          ]
+        }
+      ];
+
+      state.notes = defaultNotes;
+      renderAllNotes();
+      updateDrawer();
+    }
+
+    function renderAllNotes() {
+      const container = document.getElementById('notes-container');
+      container.innerHTML = '';
+
+      state.notes.forEach(note => {
+        if (note.minimized) {
+          // Render cute mini widget
+          const widget = createMiniWidgetElement(note);
+          container.appendChild(widget);
+        } else {
+          // Render full note window
+          const noteEl = createNoteElement(note);
+          container.appendChild(noteEl);
+        }
+      });
+
+      document.getElementById('total-notes-count').innerText = state.notes.length;
+    }
+
+    function createNoteElement(note) {
+      const theme = THEMES[note.theme] || THEMES.sakura;
+      const el = document.createElement('div');
+      el.id = `note-${note.id}`;
+      el.className = `absolute select-none flex flex-col transition-shadow duration-200 group ${
+        state.privacyMode ? 'privacy-blurred' : ''
+      }`;
+      el.style.left = `${note.x}px`;
+      el.style.top = `${note.y}px`;
+      el.style.width = `${note.width || 340}px`;
+      el.style.height = `${note.height || 360}px`;
+      el.style.zIndex = note.zIndex || 10;
+      el.style.opacity = note.opacity || 0.95;
+
+      // Shape-specific styling
+      let shapeClass = 'rounded-3xl shadow-soft border ' + theme.borderClass;
+      if (note.shape === 'polaroid') shapeClass = 'polaroid-frame rounded-md';
+      else if (note.shape === 'wave') shapeClass = 'wave-border shadow-soft border-2 ' + theme.borderClass;
+      else if (note.shape === 'hand-drawn') shapeClass = 'hand-drawn-paper shadow-paper';
+
+      el.innerHTML = `
+        <div class="note-window w-full h-full ${theme.bgClass} backdrop-blur-md ${shapeClass} flex flex-col overflow-hidden relative">
+          <!-- Top Washi Tape or Handle -->
+          <div class="w-full flex items-center justify-center pt-2 pb-1 relative cursor-grab active:cursor-grabbing note-drag-handle flex-shrink-0">
+            ${note.shape === 'hand-drawn' ? '<div class="w-20 h-4 washi-tape rounded-sm mb-1 -mt-1 transform -rotate-1"></div>' : ''}
+            <!-- Pin Indicator -->
+            ${note.pinned ? '<span class="absolute left-3 top-2 text-xs text-sakura-400" title="已置顶"><i class="fa-solid fa-thumbtack"></i></span>' : ''}
+            <!-- Lock Indicator -->
+            ${note.locked ? '<span class="absolute left-7 top-2 text-xs text-amber-400" title="已锁定位置与大小"><i class="fa-solid fa-lock"></i></span>' : ''}
+          </div>
+
+          <!-- Note Header -->
+          <div class="px-4 py-1.5 flex items-center justify-between gap-2 border-b border-pink-100/50 flex-shrink-0">
+            <!-- Editable Title & Category Tag -->
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${theme.tagBg}">
+                ${getCategoryName(note.category)}
+              </span>
+              <input type="text" value="${escapeHtml(note.title)}" 
+                     onchange="updateNoteTitle('${note.id}', this.value)"
+                     class="text-xs font-bold text-gray-800 bg-transparent outline-none w-full truncate focus:bg-white/50 rounded px-1" />
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center space-x-1 opacity-70 group-hover:opacity-100 transition flex-shrink-0">
+              <!-- Sticker Menu -->
+              <button onclick="toggleStickerMenu('${note.id}', event)" title="添加可爱贴纸"
+                      class="w-6 h-6 rounded-full hover:bg-pink-100/60 text-gray-500 hover:text-sakura-500 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-icons"></i>
+              </button>
+              <!-- Settings dropdown -->
+              <button onclick="toggleNoteSettings('${note.id}', event)" title="皮肤与造型外观"
+                      class="w-6 h-6 rounded-full hover:bg-pink-100/60 text-gray-500 hover:text-sakura-500 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-palette"></i>
+              </button>
+              <!-- Polaroid Share Card -->
+              <button onclick="openPolaroidShare('${note.id}')" title="生成手账打卡图"
+                      class="w-6 h-6 rounded-full hover:bg-pink-100/60 text-gray-500 hover:text-sakura-500 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-share-nodes"></i>
+              </button>
+              <!-- Minimize to Widget -->
+              <button onclick="toggleMinimizeNote('${note.id}')" title="收起为桌面小挂件"
+                      class="w-6 h-6 rounded-full hover:bg-pink-100/60 text-gray-500 hover:text-amber-500 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-window-minimize -translate-y-1"></i>
+              </button>
+              <!-- Delete Note -->
+              <button onclick="deleteNote('${note.id}')" title="删除便签"
+                      class="w-6 h-6 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-400 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-trash-can text-[11px]"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Floating Stickers on Note -->
+          <div class="note-stickers-layer absolute inset-0 pointer-events-none z-10">
+            ${renderNoteStickers(note)}
+          </div>
+
+          <!-- Note Content & To-Do List (Flex-1 with auto scroll) -->
+          <div class="note-content-area p-3.5 flex-1 overflow-y-auto space-y-2 min-h-0">
+            <div id="items-${note.id}" class="space-y-1.5">
+              ${renderTodoItems(note)}
+            </div>
+
+            <!-- Add new task quick input -->
+            <div class="pt-2 flex items-center gap-1.5">
+              <span class="text-gray-300 text-xs pl-1">
+                <i class="fa-solid fa-plus"></i>
+              </span>
+              <input type="text" placeholder="输入待办按回车保存..." 
+                     onkeydown="handleAddTaskKey(event, '${note.id}')"
+                     class="text-xs bg-transparent border-b border-dashed border-pink-200/80 focus:border-sakura-400 outline-none w-full py-1 text-gray-700 placeholder-gray-400" />
+            </div>
+          </div>
+
+          <!-- Note Footer Status & Completion Bar -->
+          <div class="px-4 py-2 border-t border-pink-100/60 bg-white/40 flex items-center justify-between text-[10px] text-gray-500 flex-shrink-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium">${getCompletionRatioText(note)}</span>
+              <div class="w-14 h-1.5 bg-gray-200/80 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r ${theme.gradient} transition-all duration-300" 
+                     style="width: ${getCompletionPercentage(note)}%;"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <!-- Mark all done toggle button -->
+              <button onclick="toggleAllTasksDone('${note.id}')" title="一键全部标记完成/重置"
+                      class="hover:text-sakura-500 transition px-1.5 py-0.5 rounded-lg hover:bg-pink-100/50 flex items-center gap-1 text-[10px] text-gray-500">
+                <i class="fa-solid fa-check-double text-[9px] text-sakura-400"></i>
+                <span>全完成</span>
+              </button>
+              <!-- Pin Toggle -->
+              <button onclick="togglePinNote('${note.id}')" title="置顶便签" 
+                      class="hover:text-sakura-500 transition ${note.pinned ? 'text-sakura-500 font-bold' : 'text-gray-400'}">
+                <i class="fa-solid fa-thumbtack"></i>
+              </button>
+              <!-- Lock Toggle -->
+              <button onclick="toggleLockNote('${note.id}')" title="锁定位置与大小" 
+                      class="hover:text-amber-500 transition ${note.locked ? 'text-amber-500 font-bold' : 'text-gray-400'}">
+                <i class="fa-solid fa-lock"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Corner visual cue for resizing -->
+          ${!note.locked ? '<div class="resize-corner-indicator"></div>' : ''}
+        </div>
+
+        <!-- Hidden Popover: Settings & Theme Menu -->
+        <div id="settings-menu-${note.id}" class="hidden absolute top-12 right-2 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-pink-100 p-3 w-56 text-xs text-gray-700">
+          <p class="font-bold text-gray-800 pb-1 mb-2 border-b border-pink-100">便签美学设置</p>
+          
+          <!-- Themes palette -->
+          <label class="block text-[11px] text-gray-500 mb-1">配色主题</label>
+          <div class="grid grid-cols-6 gap-1.5 mb-3">
+            ${Object.keys(THEMES).map(key => `
+              <button onclick="changeNoteTheme('${note.id}', '${key}')" 
+                      style="background-color: ${THEMES[key].accentColor};" 
+                      class="w-6 h-6 rounded-full border-2 ${note.theme === key ? 'border-gray-800 scale-110' : 'border-white'} shadow-sm transition hover:scale-105"
+                      title="${THEMES[key].name}"></button>
+            `).join('')}
+          </div>
+
+          <!-- Shape styling -->
+          <label class="block text-[11px] text-gray-500 mb-1">纸张造型</label>
+          <div class="grid grid-cols-3 gap-1 mb-3">
+            <button onclick="changeNoteShape('${note.id}', 'polaroid')" class="py-1 px-1.5 rounded-lg border text-[10px] text-center ${note.shape==='polaroid'?'border-sakura-400 bg-pink-50 text-sakura-600':'border-gray-200'}">拍立得</button>
+            <button onclick="changeNoteShape('${note.id}', 'wave')" class="py-1 px-1.5 rounded-lg border text-[10px] text-center ${note.shape==='wave'?'border-sakura-400 bg-pink-50 text-sakura-600':'border-gray-200'}">波浪花边</button>
+            <button onclick="changeNoteShape('${note.id}', 'hand-drawn')" class="py-1 px-1.5 rounded-lg border text-[10px] text-center ${note.shape==='hand-drawn'?'border-sakura-400 bg-pink-50 text-sakura-600':'border-gray-200'}">手绘纸张</button>
+          </div>
+
+          <!-- Checkbox icon style -->
+          <label class="block text-[11px] text-gray-500 mb-1">打卡勾选图标</label>
+          <div class="flex gap-2 mb-3">
+            ${CHECK_ICONS.map(ci => `
+              <button onclick="changeCheckIcon('${note.id}', '${ci.id}')" class="w-6 h-6 rounded flex items-center justify-center ${note.checkIcon === ci.id ? 'bg-pink-100 text-sakura-600' : 'text-gray-500 hover:bg-gray-100'}" title="${ci.label}">
+                <i class="${ci.icon} text-xs"></i>
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Opacity slider -->
+          <label class="block text-[11px] text-gray-500 mb-1">毛玻璃透明度: <span id="opacity-val-${note.id}">${Math.round((note.opacity||0.95)*100)}%</span></label>
+          <input type="range" min="0.4" max="1" step="0.05" value="${note.opacity || 0.95}"
+                 oninput="changeNoteOpacity('${note.id}', this.value)" class="w-full accent-sakura-500 h-1 bg-gray-200 rounded-lg cursor-pointer" />
+        </div>
+
+        <!-- Hidden Popover: Stickers Picker -->
+        <div id="stickers-menu-${note.id}" class="hidden absolute top-12 right-6 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-pink-100 p-2.5 w-48 text-xs">
+          <p class="font-bold text-gray-800 pb-1 mb-2 border-b border-pink-100">贴上可爱小装饰</p>
+          <div class="grid grid-cols-5 gap-2 text-base text-center">
+            ${STICKERS.map(s => `
+              <button onclick="addStickerToNote('${note.id}', '${s}')" class="hover:scale-125 transition p-1 cursor-pointer">
+                ${s}
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="clearNoteStickers('${note.id}')" class="w-full mt-2 text-[10px] text-gray-400 hover:text-red-400 py-0.5 text-center">
+            清除所有贴纸
+          </button>
+        </div>
+
+        <!-- Edge & Corner Resize Handles (active if not locked) -->
+        ${!note.locked ? `
+          <div class="resize-handle-r" data-resize="r" title="向右拖动调节宽度"></div>
+          <div class="resize-handle-b" data-resize="b" title="向下拖动调节高度"></div>
+          <div class="resize-handle-se" data-resize="se" title="拖动右下角自由延展大小"></div>
+        ` : ''}
+      `;
+
+      // Attach Drag and Drop listeners
+      attachDragListeners(el, note);
+      // Attach Edge Resize listeners
+      attachResizeListeners(el, note);
+      return el;
+    }
+
+    function createMiniWidgetElement(note) {
+      const theme = THEMES[note.theme] || THEMES.sakura;
+      const el = document.createElement('div');
+      el.id = `widget-${note.id}`;
+      el.className = `absolute z-20 cursor-pointer animate-gentle-float group`;
+      el.style.left = `${note.x}px`;
+      el.style.top = `${note.y}px`;
+
+      const completed = note.items.filter(i => i.done).length;
+      const total = note.items.length;
+
+      el.innerHTML = `
+        <div onclick="toggleMinimizeNote('${note.id}')" 
+             class="relative px-3 py-2 rounded-2xl ${theme.bgClass} border-2 ${theme.borderClass} shadow-float backdrop-blur-md flex items-center gap-2 hover:scale-105 transition active:scale-95">
+          <div class="w-7 h-7 rounded-xl bg-gradient-to-tr ${theme.gradient} text-white flex items-center justify-center text-xs shadow-sm">
+            <i class="fa-solid fa-paw"></i>
+          </div>
+          <div class="text-left">
+            <p class="text-[11px] font-bold text-gray-800 truncate max-w-[90px]">${escapeHtml(note.title)}</p>
+            <p class="text-[9px] text-sakura-500 font-mono">${completed}/${total} 已完成</p>
+          </div>
+          <!-- Click to restore icon -->
+          <span class="text-gray-400 text-xs ml-1 group-hover:text-sakura-500">
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </span>
+        </div>
+      `;
+
+      attachDragListeners(el, note, true);
+      return el;
+    }
+
+    function renderTodoItems(note) {
+      if (!note.items || note.items.length === 0) {
+        return `<div class="text-center py-4 text-xs text-gray-400 font-light">还没有待办事项，点击下方添加一条吧 ~</div>`;
+      }
+
+      const iconDef = CHECK_ICONS.find(c => c.id === note.checkIcon) || CHECK_ICONS[0];
+
+      return note.items.map((item, index) => {
+        return `
+          <div class="flex items-center justify-between group/item py-1.5 px-2 rounded-xl hover:bg-white/75 transition ${
+            item.done ? 'bg-pink-50/40 opacity-70' : 'bg-white/40'
+          }">
+            <!-- Click anywhere on row content to toggle completed state -->
+            <div class="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer" onclick="toggleTaskDone('${note.id}', '${item.id}')" title="点击切换完成状态">
+              <!-- Custom Aesthetic Checkbox -->
+              <button type="button" onclick="event.stopPropagation(); toggleTaskDone('${note.id}', '${item.id}')" 
+                      title="${item.done ? '点击标记为未完成' : '点击标记为已完成'}"
+                      class="w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all duration-200 active:scale-75 shadow-xs ${
+                        item.done 
+                          ? 'bg-sakura-400 text-white check-bounce shadow-sm shadow-pink-200' 
+                          : 'border-2 border-pink-200/90 hover:border-sakura-400 bg-white text-transparent hover:text-sakura-300'
+                      }">
+                ${item.done ? (iconDef.emoji || '✓') : '<span class="text-[9px] opacity-0 group-hover/item:opacity-60 text-sakura-400">✓</span>'}
+              </button>
+
+              <!-- Task Text with strike-through when done -->
+              <span class="text-xs select-text truncate transition-all duration-200 ${
+                item.done ? 'line-through text-gray-400 italic' : 'text-gray-700 font-medium'
+              }">
+                ${escapeHtml(item.text)}
+              </span>
+            </div>
+
+            <!-- Task meta: Reminder time badge, edit & delete -->
+            <div class="flex items-center space-x-1.5 opacity-0 group-hover/item:opacity-100 transition">
+              ${item.reminderTime ? `
+                <span class="text-[9px] font-mono text-sakura-500 bg-pink-50 border border-pink-200/60 px-1 rounded flex items-center gap-0.5">
+                  <i class="fa-regular fa-clock text-[8px]"></i>
+                  ${item.reminderTime}
+                </span>
+              ` : `
+                <button onclick="event.stopPropagation(); setTaskReminder('${note.id}', '${item.id}')" title="设置提醒时间" 
+                        class="text-gray-400 hover:text-sakura-500 text-[10px]">
+                  <i class="fa-regular fa-bell"></i>
+                </button>
+              `}
+              <button onclick="event.stopPropagation(); editTaskPrompt('${note.id}', '${item.id}')" title="编辑文本"
+                      class="text-gray-300 hover:text-sakura-500 text-xs">
+                <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+              </button>
+              <button onclick="event.stopPropagation(); deleteTask('${note.id}', '${item.id}')" title="删除该事项"
+                      class="text-gray-300 hover:text-red-400 text-xs">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderNoteStickers(note) {
+      if (!note.stickers || note.stickers.length === 0) return '';
+      const positions = [
+        'top-1 right-2 -rotate-12',
+        'bottom-3 right-4 rotate-6',
+        'top-8 -left-2 rotate-12',
+        'bottom-8 -right-2 -rotate-6'
+      ];
+      return note.stickers.map((s, idx) => {
+        const pos = positions[idx % positions.length];
+        return `<span class="absolute ${pos} text-lg drop-shadow-sm select-none">${s}</span>`;
+      }).join('');
+    }
+
+    function attachDragListeners(element, note, isWidget = false) {
+      const handle = isWidget ? element : element.querySelector('.note-drag-handle');
+      if (!handle) return;
+
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let initialLeft = 0, initialTop = 0;
+
+      const onMouseDown = (e) => {
+        if (note.locked) return; // Prevent drag if locked
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = note.x;
+        initialTop = note.y;
+
+        // Bring to front
+        bringToFront(note.id);
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      };
+
+      const onMouseMove = (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        const maxW = window.innerWidth - (isWidget ? 120 : 340);
+        const maxH = window.innerHeight - (isWidget ? 60 : 250);
+
+        note.x = Math.max(10, Math.min(maxW, initialLeft + dx));
+        note.y = Math.max(10, Math.min(maxH, initialTop + dy));
+
+        element.style.left = `${note.x}px`;
+        element.style.top = `${note.y}px`;
+      };
+
+      const onMouseUp = () => {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      handle.addEventListener('mousedown', onMouseDown);
+
+      // Mobile touch support
+      handle.addEventListener('touchstart', (e) => {
+        if (note.locked) return;
+        const touch = e.touches[0];
+        isDragging = true;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        initialLeft = note.x;
+        initialTop = note.y;
+        bringToFront(note.id);
+      }, { passive: true });
+
+      handle.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        note.x = initialLeft + (touch.clientX - startX);
+        note.y = initialTop + (touch.clientY - startY);
+        element.style.left = `${note.x}px`;
+        element.style.top = `${note.y}px`;
+      }, { passive: true });
+
+      handle.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+    }
+
+    function attachResizeListeners(element, note) {
+      if (note.locked) return;
+
+      const handles = element.querySelectorAll('[data-resize]');
+      handles.forEach(handle => {
+        const direction = handle.getAttribute('data-resize');
+
+        const onStart = (clientX, clientY) => {
+          bringToFront(note.id);
+          const startX = clientX;
+          const startY = clientY;
+          const initialWidth = note.width || element.offsetWidth || 340;
+          const initialHeight = note.height || element.offsetHeight || 360;
+
+          // Constraints
+          const minW = 240;
+          const maxW = Math.min(window.innerWidth - note.x - 20, 900);
+          const minH = 200;
+          const maxH = Math.min(window.innerHeight - note.y - 20, 800);
+
+          const onMove = (curX, curY) => {
+            const dx = curX - startX;
+            const dy = curY - startY;
+
+            if (direction === 'r' || direction === 'se') {
+              const newW = Math.max(minW, Math.min(maxW, initialWidth + dx));
+              note.width = newW;
+              element.style.width = `${newW}px`;
+            }
+            if (direction === 'b' || direction === 'se') {
+              const newH = Math.max(minH, Math.min(maxH, initialHeight + dy));
+              note.height = newH;
+              element.style.height = `${newH}px`;
+            }
+          };
+
+          const onMouseMove = (e) => {
+            onMove(e.clientX, e.clientY);
+          };
+
+          const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+
+          const onTouchMove = (e) => {
+            if (e.touches.length > 0) {
+              onMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+          };
+
+          const onTouchEnd = () => {
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+          };
+
+          document.addEventListener('touchmove', onTouchMove, { passive: true });
+          document.addEventListener('touchend', onTouchEnd);
+        };
+
+        handle.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onStart(e.clientX, e.clientY);
+        });
+
+        handle.addEventListener('touchstart', (e) => {
+          e.stopPropagation();
+          if (e.touches.length > 0) {
+            onStart(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+      });
+    }
+
+    function bringToFront(noteId) {
+      const maxZ = Math.max(10, ...state.notes.map(n => n.zIndex || 10));
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.zIndex = maxZ + 1;
+        const el = document.getElementById(`note-${noteId}`) || document.getElementById(`widget-${noteId}`);
+        if (el) el.style.zIndex = note.zIndex;
+      }
+    }
+
+    function toggleTaskDone(noteId, taskId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      const item = note.items.find(i => i.id === taskId);
+      if (!item) return;
+
+      item.done = !item.done;
+
+      if (item.done) {
+        playCheckSound();
+        // Check if all tasks in note are now completed!
+        const allCompleted = note.items.length > 0 && note.items.every(i => i.done);
+        if (allCompleted) {
+          triggerCelebrationConfetti();
+          showToast(`太棒啦！已完成便签「${note.title}」的全部事项 🌸`);
+        }
+      } else {
+        playBubbleSound();
+      }
+
+      renderAllNotes();
+      updateDrawer();
+    }
+
+    function toggleAllTasksDone(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note || note.items.length === 0) return;
+      const allDone = note.items.every(i => i.done);
+      note.items.forEach(i => i.done = !allDone);
+      if (!allDone) {
+        playCheckSound();
+        triggerCelebrationConfetti();
+        showToast(`太棒啦！已将「${note.title}」全部标记为已完成 🌸`);
+      } else {
+        playBubbleSound();
+        showToast(`已重置「${note.title}」的事项状态`);
+      }
+      renderAllNotes();
+      updateDrawer();
+    }
+
+    function handleAddTaskKey(event, noteId) {
+      if (event.key === 'Enter') {
+        const text = event.target.value.trim();
+        if (!text) return;
+        const note = state.notes.find(n => n.id === noteId);
+        if (!note) return;
+
+        const newItem = {
+          id: 't_' + Date.now(),
+          text: text,
+          done: false,
+          priority: 'normal',
+          reminderTime: ''
+        };
+        note.items.push(newItem);
+        playBubbleSound();
+        event.target.value = '';
+        renderAllNotes();
+        updateDrawer();
+      }
+    }
+
+    function deleteTask(noteId, taskId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      note.items = note.items.filter(i => i.id !== taskId);
+      playBubbleSound();
+      renderAllNotes();
+      updateDrawer();
+    }
+
+    function editTaskPrompt(noteId, taskId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      const item = note.items.find(i => i.id === taskId);
+      if (!item) return;
+
+      showPromptModal('修改事项内容', item.text, (newVal) => {
+        if (newVal && newVal.trim()) {
+          item.text = newVal.trim();
+          renderAllNotes();
+          updateDrawer();
+        }
+      });
+    }
+
+    function setTaskReminder(noteId, taskId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      const item = note.items.find(i => i.id === taskId);
+      if (!item) return;
+
+      showPromptModal('设置定时提醒时间 (例: 15:30 或 2026-09-17 18:00)', item.reminderTime || '14:30', (newVal) => {
+        item.reminderTime = newVal ? newVal.trim() : '';
+        showToast('已更新提醒时间 🔔');
+        renderAllNotes();
+      });
+    }
+
+    function createNewNote() {
+      playBubbleSound();
+      const themeKeys = Object.keys(THEMES);
+      const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+      const categories = ['work', 'life', 'study', 'wishlist'];
+      const randomCat = categories[Math.floor(Math.random() * categories.length)];
+
+      const newId = 'note-' + Date.now();
+      const newNote = {
+        id: newId,
+        title: '✨ 治愈灵感便签',
+        category: randomCat,
+        theme: randomTheme,
+        shape: 'wave',
+        opacity: 0.95,
+        pinned: false,
+        locked: false,
+        minimized: false,
+        checkIcon: 'flower',
+        stickers: ['🌸'],
+        x: Math.min(window.innerWidth - 360, 60 + Math.random() * 200),
+        y: Math.min(window.innerHeight - 350, 70 + Math.random() * 180),
+        width: 340,
+        height: 360,
+        zIndex: 20,
+        items: [
+          { id: 'item-1', text: '随手记录新的灵感待办', done: false, priority: 'normal', reminderTime: '' }
+        ]
+      };
+
+      state.notes.push(newNote);
+      renderAllNotes();
+      updateDrawer();
+      showToast('已为您新建一张治愈便签 📝');
+    }
+
+    function deleteNote(noteId) {
+      playBubbleSound();
+      state.notes = state.notes.filter(n => n.id !== noteId);
+      renderAllNotes();
+      updateDrawer();
+      showToast('便签已删除');
+    }
+
+    function togglePinNote(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      note.pinned = !note.pinned;
+      if (note.pinned) {
+        note.zIndex = 50;
+        showToast('便签已置顶');
+      } else {
+        showToast('已取消置顶');
+      }
+      renderAllNotes();
+    }
+
+    function toggleLockNote(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      note.locked = !note.locked;
+      showToast(note.locked ? '位置已锁定，防止拖动误触 🔒' : '已解锁拖动位置 🔓');
+      renderAllNotes();
+    }
+
+    function toggleMinimizeNote(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+      note.minimized = !note.minimized;
+      playBubbleSound();
+      renderAllNotes();
+    }
+
+    function updateNoteTitle(noteId, newTitle) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.title = newTitle.trim() || '未命名便签';
+        updateDrawer();
+      }
+    }
+
+    function changeNoteTheme(noteId, themeKey) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note && THEMES[themeKey]) {
+        note.theme = themeKey;
+        renderAllNotes();
+      }
+    }
+
+    function changeNoteShape(noteId, shape) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.shape = shape;
+        renderAllNotes();
+      }
+    }
+
+    function changeCheckIcon(noteId, iconId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.checkIcon = iconId;
+        renderAllNotes();
+      }
+    }
+
+    function changeNoteOpacity(noteId, val) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.opacity = parseFloat(val);
+        const el = document.getElementById(`note-${noteId}`);
+        if (el) el.style.opacity = note.opacity;
+        const label = document.getElementById(`opacity-val-${noteId}`);
+        if (label) label.innerText = Math.round(note.opacity * 100) + '%';
+      }
+    }
+
+    function toggleNoteSettings(noteId, event) {
+      event.stopPropagation();
+      closeAllPopovers();
+      const menu = document.getElementById(`settings-menu-${noteId}`);
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    function toggleStickerMenu(noteId, event) {
+      event.stopPropagation();
+      closeAllPopovers();
+      const menu = document.getElementById(`stickers-menu-${noteId}`);
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    function addStickerToNote(noteId, sticker) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        if (!note.stickers) note.stickers = [];
+        if (note.stickers.length < 4) {
+          note.stickers.push(sticker);
+          playBubbleSound();
+          renderAllNotes();
+        } else {
+          showToast('贴纸已贴满啦 (最多4个)');
+        }
+      }
+    }
+
+    function clearNoteStickers(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.stickers = [];
+        renderAllNotes();
+      }
+    }
+
+    function closeAllPopovers() {
+      document.querySelectorAll('[id^="settings-menu-"], [id^="stickers-menu-"]').forEach(el => {
+        el.classList.add('hidden');
+      });
+    }
+
+    document.addEventListener('click', () => {
+      closeAllPopovers();
+    });
+
+    function toggleDrawer() {
+      const drawer = document.getElementById('note-drawer');
+      drawer.classList.toggle('translate-x-full');
+      updateDrawer();
+    }
+
+    function filterDrawerNotes(category) {
+      state.activeDrawerFilter = category;
+      document.querySelectorAll('.drawer-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-sakura-500', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-600');
+      });
+      event.target.classList.remove('bg-gray-100', 'text-gray-600');
+      event.target.classList.add('bg-sakura-500', 'text-white');
+      updateDrawer();
+    }
+
+    function updateDrawer() {
+      const list = document.getElementById('drawer-list');
+      if (!list) return;
+
+      const filtered = state.activeDrawerFilter === 'all' 
+        ? state.notes 
+        : state.notes.filter(n => n.category === state.activeDrawerFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center py-12 text-gray-400 text-xs">当前分类下暂无便签</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(note => {
+        const theme = THEMES[note.theme] || THEMES.sakura;
+        const total = note.items.length;
+        const done = note.items.filter(i => i.done).length;
+
+        return `
+          <div class="p-3 rounded-2xl border border-pink-100 bg-white hover:shadow-md transition flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] px-2 py-0.5 rounded-full ${theme.tagBg}">
+                ${getCategoryName(note.category)}
+              </span>
+              <div class="flex items-center gap-1">
+                <button onclick="focusNote('${note.id}')" title="定位到桌面位置" class="text-xs text-gray-400 hover:text-sakura-500 p-1">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                </button>
+                <button onclick="deleteNote('${note.id}')" title="删除" class="text-xs text-gray-400 hover:text-red-400 p-1">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+            <h4 class="text-xs font-bold text-gray-800 truncate">${escapeHtml(note.title)}</h4>
+            <div class="flex items-center justify-between text-[10px] text-gray-400">
+              <span>进度: ${done}/${total}</span>
+              <span>${note.minimized ? '挂件收起中' : '桌面展示中'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function focusNote(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (note) {
+        note.minimized = false;
+        bringToFront(noteId);
+        renderAllNotes();
+        toggleDrawer();
+      }
+    }
+
+    function arrangeAllNotes() {
+      let curX = 40;
+      let curY = 40;
+      state.notes.forEach((note) => {
+        note.minimized = false;
+        note.x = curX;
+        note.y = curY;
+        curX += 360;
+        if (curX + 340 > window.innerWidth) {
+          curX = 40;
+          curY += 320;
+        }
+      });
+      renderAllNotes();
+      showToast('所有便签已自动对齐排列 ✨');
+    }
+
+    function toggleCalendarModal() {
+      const modal = document.getElementById('calendar-modal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        renderCalendar();
+      }
+    }
+
+    function changeCalendarMonth(delta) {
+      state.calendarDate.setMonth(state.calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const year = state.calendarDate.getFullYear();
+      const month = state.calendarDate.getMonth();
+      document.getElementById('calendar-month-title').innerText = `${year}年 ${month + 1}月`;
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById('calendar-days-grid');
+      grid.innerHTML = '';
+
+      // Blank prefix cells
+      for (let i = 0; i < firstDayIndex; i++) {
+        grid.innerHTML += `<div class="h-8"></div>`;
+      }
+
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = isCurrentMonth && today.getDate() === day;
+        const isSelected = state.selectedCalendarDay === day;
+
+        // Count reminders on this day (mock checking reminder tags)
+        const hasTasks = day % 3 === 0 || isToday; // demo active days
+
+        grid.innerHTML += `
+          <button onclick="selectCalendarDay(${day})" 
+                  class="h-8 rounded-xl flex flex-col items-center justify-center transition relative ${
+                    isSelected ? 'bg-sakura-500 text-white font-bold' : 
+                    isToday ? 'bg-pink-100 text-sakura-600 font-bold' : 'text-gray-700 hover:bg-pink-50'
+                  }">
+            <span>${day}</span>
+            ${hasTasks ? `<span class="w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-sakura-400'} -mt-0.5"></span>` : ''}
+          </button>
+        `;
+      }
+
+      updateCalendarTasksList(state.selectedCalendarDay);
+    }
+
+    function selectCalendarDay(day) {
+      state.selectedCalendarDay = day;
+      renderCalendar();
+    }
+
+    function updateCalendarTasksList(day) {
+      const label = document.getElementById('selected-date-label');
+      label.innerText = `${state.calendarDate.getMonth() + 1}月${day}日 关联日程`;
+
+      const preview = document.getElementById('calendar-tasks-preview');
+      // Aggregate all active tasks across all notes
+      const allTasks = [];
+      state.notes.forEach(note => {
+        note.items.forEach(t => {
+          allTasks.push({ ...t, noteTitle: note.title });
+        });
+      });
+
+      document.getElementById('selected-date-count').innerText = `${allTasks.length} 项日程`;
+
+      if (allTasks.length === 0) {
+        preview.innerHTML = `<div class="text-center py-2 text-gray-400">今日暂无日程安排</div>`;
+        return;
+      }
+
+      preview.innerHTML = allTasks.map(t => `
+        <div class="flex items-center justify-between p-1.5 bg-pink-50/60 rounded-lg">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full ${t.done ? 'bg-emerald-400' : 'bg-sakura-400'}"></span>
+            <span class="${t.done ? 'line-through text-gray-400' : 'text-gray-700'}">${escapeHtml(t.text)}</span>
+          </div>
+          <span class="text-[10px] text-gray-400">${escapeHtml(t.noteTitle)}</span>
+        </div>
+      `).join('');
+    }
+
+    function openPolaroidShare(noteId) {
+      const note = state.notes.find(n => n.id === noteId);
+      if (!note) return;
+
+      document.getElementById('polaroid-title-display').innerText = note.title;
+      document.getElementById('polaroid-tag-display').innerText = `✨ ${getCategoryName(note.category)}`;
+
+      const listContainer = document.getElementById('polaroid-tasks-list');
+      listContainer.innerHTML = note.items.map(item => `
+        <div class="flex items-center gap-2">
+          <span class="text-sakura-400 text-xs">${item.done ? '🌸' : '⚪'}</span>
+          <span class="${item.done ? 'line-through text-gray-400' : 'text-gray-700 font-medium'}">${escapeHtml(item.text)}</span>
+        </div>
+      `).join('');
+
+      const now = new Date();
+      document.getElementById('polaroid-date-stamp').innerText = 
+        `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+      document.getElementById('polaroid-modal').classList.remove('hidden');
+    }
+
+    function closePolaroidModal() {
+      document.getElementById('polaroid-modal').classList.add('hidden');
+    }
+
+    function downloadPolaroidCard() {
+      showToast('正在生成拍立得打卡海报... 📷');
+      setTimeout(() => {
+        showToast('打卡海报已生成完毕，已模拟保存至相册！🌸');
+        closePolaroidModal();
+      }, 700);
+    }
+
+    function cycleWallpaper() {
+      state.currentWallpaperIndex = (state.currentWallpaperIndex + 1) % WALLPAPERS.length;
+      document.getElementById('desktop-bg').style.background = WALLPAPERS[state.currentWallpaperIndex];
+      showToast('已切换至新桌面壁纸 ✨');
+    }
+
+    function togglePrivacyMode() {
+      state.privacyMode = !state.privacyMode;
+      const btn = document.getElementById('privacy-toggle-btn');
+      if (state.privacyMode) {
+        btn.classList.add('text-sakura-500', 'bg-pink-100');
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash text-sm"></i>';
+        showToast('防窥模式已开启：便签内容已虚化 👁️');
+      } else {
+        btn.classList.remove('text-sakura-500', 'bg-pink-100');
+        btn.innerHTML = '<i class="fa-solid fa-eye text-sm"></i>';
+        showToast('防窥模式已关闭');
+      }
+      renderAllNotes();
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('sound-toggle-btn');
+      if (state.soundEnabled) {
+        btn.classList.remove('text-gray-400');
+        btn.classList.add('text-sakura-500');
+        btn.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
+        showToast('打卡音效已开启 🔔');
+        playCheckSound();
+      } else {
+        btn.classList.remove('text-sakura-500');
+        btn.classList.add('text-gray-400');
+        btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-sm"></i>';
+        showToast('打卡音效已静音');
+      }
+    }
+
+    function refreshDailyQuote() {
+      const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      document.getElementById('daily-quote-text').innerText = quote;
+      playBubbleSound();
+    }
+
+    function triggerCelebrationConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#f87394', '#ffd64d', '#53ce98', '#af8add', '#ffccd8']
+        });
+      }
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-white/90 backdrop-blur-md text-gray-800 border border-pink-200 text-xs px-4 py-2 rounded-2xl shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = `<i class="fa-solid fa-heart text-sakura-400 text-xs"></i><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // Custom prompt modal alternative to window.prompt
+    function showPromptModal(title, defaultValue, onConfirm) {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 z-50 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4';
+      overlay.innerHTML = `
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border border-pink-100 flex flex-col">
+          <h4 class="font-bold text-gray-800 text-xs mb-2">${escapeHtml(title)}</h4>
+          <input type="text" id="custom-prompt-input" value="${escapeHtml(defaultValue)}" class="w-full text-xs p-2.5 rounded-xl border border-pink-200 outline-none focus:border-sakura-400 bg-pink-50/30 mb-4" />
+          <div class="flex gap-2">
+            <button id="prompt-ok-btn" class="flex-1 py-1.5 bg-sakura-500 text-white rounded-xl text-xs font-medium hover:bg-sakura-600 transition">确定</button>
+            <button id="prompt-cancel-btn" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-xs hover:bg-gray-200 transition">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      const input = overlay.querySelector('#custom-prompt-input');
+      input.focus();
+      input.select();
+
+      const cleanup = () => overlay.remove();
+      overlay.querySelector('#prompt-cancel-btn').onclick = cleanup;
+      overlay.querySelector('#prompt-ok-btn').onclick = () => {
+        onConfirm(input.value);
+        cleanup();
+      };
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          onConfirm(input.value);
+          cleanup();
+        } else if (e.key === 'Escape') {
+          cleanup();
+        }
+      };
+    }
+
+    function getCategoryName(catId) {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      return cat ? cat.label : '日常便签';
+    }
+
+    function getCompletionRatioText(note) {
+      const total = note.items.length;
+      if (total === 0) return '暂无事项';
+      const done = note.items.filter(i => i.done).length;
+      return `${done}/${total} 已完成`;
+    }
+
+    function getCompletionPercentage(note) {
+      const total = note.items.length;
+      if (total === 0) return 0;
+      const done = note.items.filter(i => i.done).length;
+      return Math.round((done / total) * 100);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      // Alt + N: Create note
+      if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+        e.preventDefault();
+        createNewNote();
+      }
+      // Alt + P: Privacy blur toggle
+      if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        togglePrivacyMode();
+      }
+    });
+
+    function updateDesktopClock() {
+      const now = new Date();
+      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const date = String(now.getDate()).padStart(2, '0');
+      const day = days[now.getDay()];
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const clockEl = document.getElementById('desktop-clock-display');
+      if (clockEl) {
+        clockEl.innerText = `${year}.${month}.${date} ${day} ${hours}:${mins}`;
+      }
+    }
+
+    window.onload = function() {
+      initializeDefaultNotes();
+      updateDesktopClock();
+      setInterval(updateDesktopClock, 30000);
+    };
+  </script>
+</body>
+</html>
